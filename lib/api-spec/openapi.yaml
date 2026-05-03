@@ -1,0 +1,492 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: gemini
+    description: Gemini AI chat and image operations
+  - name: election
+    description: Election information and civic data
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /gemini/conversations:
+    get:
+      operationId: listGeminiConversations
+      tags: [gemini]
+      summary: List all conversations
+      responses:
+        "200":
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GeminiConversation"
+    post:
+      operationId: createGeminiConversation
+      tags: [gemini]
+      summary: Create a new conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGeminiConversationBody"
+      responses:
+        "201":
+          description: Created conversation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiConversation"
+  /gemini/conversations/{id}:
+    get:
+      operationId: getGeminiConversation
+      tags: [gemini]
+      summary: Get conversation with messages
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Conversation with messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiConversationWithMessages"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiError"
+    delete:
+      operationId: deleteGeminiConversation
+      tags: [gemini]
+      summary: Delete a conversation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiError"
+  /gemini/conversations/{id}/messages:
+    get:
+      operationId: listGeminiMessages
+      tags: [gemini]
+      summary: List messages in a conversation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GeminiMessage"
+    post:
+      operationId: sendGeminiMessage
+      tags: [gemini]
+      summary: Send a message and receive an AI response (SSE stream)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendGeminiMessageBody"
+      responses:
+        "200":
+          description: SSE stream of assistant response chunks
+          content:
+            text/event-stream: {}
+
+  /election/myths:
+    get:
+      operationId: listMyths
+      tags: [election]
+      summary: List election myths and facts
+      responses:
+        "200":
+          description: List of myth-busters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MythFact"
+
+  /election/polling-places:
+    get:
+      operationId: searchPollingPlaces
+      tags: [election]
+      summary: Search polling places by state
+      parameters:
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of polling places
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PollingPlace"
+
+  /election/voter-journey:
+    get:
+      operationId: getVoterJourney
+      tags: [election]
+      summary: Get voter journey steps for a state
+      parameters:
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Voter journey steps
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VoterJourney"
+
+  /election/ballot-info:
+    get:
+      operationId: getBallotInfo
+      tags: [election]
+      summary: Get ballot information by state
+      parameters:
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Ballot information for the state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BallotInfo"
+
+  /election/stats:
+    get:
+      operationId: getElectionStats
+      tags: [election]
+      summary: Get overall election participation statistics
+      responses:
+        "200":
+          description: Election statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ElectionStats"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    GeminiConversation:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - createdAt
+    GeminiMessage:
+      type: object
+      properties:
+        id:
+          type: string
+        conversationId:
+          type: string
+        role:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - conversationId
+        - role
+        - content
+        - createdAt
+    CreateGeminiConversationBody:
+      type: object
+      properties:
+        title:
+          type: string
+      required:
+        - title
+    SendGeminiMessageBody:
+      type: object
+      properties:
+        content:
+          type: string
+      required:
+        - content
+    GeminiConversationWithMessages:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/GeminiMessage"
+      required:
+        - id
+        - title
+        - createdAt
+        - messages
+    GeminiError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    MythFact:
+      type: object
+      properties:
+        id:
+          type: integer
+        myth:
+          type: string
+        fact:
+          type: string
+        category:
+          type: string
+        source:
+          type: string
+      required:
+        - id
+        - myth
+        - fact
+        - category
+        - source
+
+    PollingPlace:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        hours:
+          type: string
+        waitTime:
+          type: integer
+        latitude:
+          type: number
+        longitude:
+          type: number
+      required:
+        - id
+        - name
+        - address
+        - city
+        - state
+        - hours
+        - waitTime
+        - latitude
+        - longitude
+
+    VoterJourneyStep:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        deadline:
+          type: string
+          nullable: true
+        status:
+          type: string
+        link:
+          type: string
+          nullable: true
+        linkText:
+          type: string
+          nullable: true
+      required:
+        - id
+        - title
+        - description
+        - deadline
+        - status
+        - link
+        - linkText
+
+    VoterJourney:
+      type: object
+      properties:
+        state:
+          type: string
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/VoterJourneyStep"
+        nextElectionDate:
+          type: string
+          nullable: true
+      required:
+        - state
+        - steps
+        - nextElectionDate
+
+    BallotCandidate:
+      type: object
+      properties:
+        name:
+          type: string
+        party:
+          type: string
+        office:
+          type: string
+        website:
+          type: string
+          nullable: true
+      required:
+        - name
+        - party
+        - office
+        - website
+
+    BallotMeasure:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+      required:
+        - title
+        - description
+        - type
+
+    BallotInfo:
+      type: object
+      properties:
+        state:
+          type: string
+        electionDate:
+          type: string
+        candidates:
+          type: array
+          items:
+            $ref: "#/components/schemas/BallotCandidate"
+        measures:
+          type: array
+          items:
+            $ref: "#/components/schemas/BallotMeasure"
+      required:
+        - state
+        - electionDate
+        - candidates
+        - measures
+
+    ElectionStats:
+      type: object
+      properties:
+        registeredVoters:
+          type: integer
+        voterTurnout2019:
+          type: number
+        voterTurnoutState:
+          type: number
+        totalStates:
+          type: integer
+        totalUnionTerritories:
+          type: integer
+        mythsBusted:
+          type: integer
+      required:
+        - registeredVoters
+        - voterTurnout2019
+        - voterTurnoutState
+        - totalStates
+        - totalUnionTerritories
+        - mythsBusted

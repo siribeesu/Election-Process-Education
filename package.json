@@ -1,0 +1,29 @@
+{
+  "name": "workspace",
+  "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {
+    "dev": "concurrently \"npx pnpm --filter @workspace/api-server dev\" \"npx pnpm --filter @workspace/election-guide dev\"",
+    "build": "npx pnpm run typecheck && npx pnpm -r --if-present run build",
+    "typecheck:libs": "tsc --build",
+    "typecheck": "npx pnpm run typecheck:libs && npx pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "npx pnpm -r --if-present run test",
+    "test:ui": "npx pnpm --filter @workspace/election-guide run test:ui"
+  },
+  "private": true,
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "concurrently": "^9.2.1",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-react": "^7.34.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "prettier": "^3.8.1",
+    "typescript": "~5.9.2",
+    "typescript-eslint": "^8.0.0"
+  }
+}
