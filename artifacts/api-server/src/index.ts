@@ -1,4 +1,5 @@
 import app from "./app";
+// Deployment version: 2
 import { logger } from "./lib/logger";
 
 const rawPort = process.env["PORT"];
@@ -18,4 +19,3 @@ if (Number.isNaN(port) || port <= 0) {
 app.listen(port, "0.0.0.0", () => {
   logger.info({ port, host: "0.0.0.0" }, "Server listening and ready for traffic");
 });
-

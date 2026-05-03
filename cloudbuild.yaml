@@ -1,5 +1,0 @@
-steps:
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'gcr.io/election-assistant-494919/api-server', '-f', 'artifacts/api-server/Dockerfile', '.']
-images:
-- 'gcr.io/election-assistant-494919/api-server'

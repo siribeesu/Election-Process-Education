@@ -79,14 +79,8 @@ let _db: any = null;
 const _ready: Promise<void> = (async () => {
   let credsPath = process.env["GOOGLE_APPLICATION_CREDENTIALS"];
 
-  if (!credsPath) {
-    console.warn("[firebase] GOOGLE_APPLICATION_CREDENTIALS not set — using in-memory storage.");
-    _db = new MemFirestore();
-    return;
-  }
-
   // Resolve relative paths from the current working directory
-  if (!path.isAbsolute(credsPath)) {
+  if (credsPath && !path.isAbsolute(credsPath)) {
     credsPath = path.resolve(process.cwd(), credsPath);
     process.env["GOOGLE_APPLICATION_CREDENTIALS"] = credsPath;
   }
@@ -94,8 +88,11 @@ const _ready: Promise<void> = (async () => {
   try {
     const { initializeApp, getApps } = await import("firebase-admin/app");
     const { getFirestore } = await import("firebase-admin/firestore");
+    const { applicationDefault } = await import("firebase-admin/app");
+
     if (!getApps().length) {
-      initializeApp({ credential: (await import("firebase-admin/app")).applicationDefault() });
+      // In GCP environment (Cloud Run), applicationDefault() works without GOOGLE_APPLICATION_CREDENTIALS
+      initializeApp({ credential: applicationDefault() });
     }
     _db = getFirestore();
     console.info("[firebase] Connected to Firebase Firestore ✓");
